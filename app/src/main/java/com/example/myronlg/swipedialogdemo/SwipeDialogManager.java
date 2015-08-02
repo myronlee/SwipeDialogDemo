@@ -23,8 +23,13 @@ public class SwipeDialogManager{
     public SwipeDialogManager(Context context) {
         this.context = context;
         this.windowManager = (WindowManager) context.getSystemService("window");
+        dialogContainer = new EmbedDialogFrameLayout(context);
     }
 
+    /**
+     * deprecated
+     * @param layout
+     */
     public void addDialogView(int layout) {
         dialogContainer = new EmbedDialogFrameLayout(context);
         dialogContainer.addDialogView(layout);
@@ -36,15 +41,38 @@ public class SwipeDialogManager{
             }
         });
 
+        addContainerToWindowManager();
+    }
+
+    public void addDialogView(View view) {
+        addViewToContainer(view);
+
+        addContainerToWindowManager();
+    }
+
+    private void addViewToContainer(View view) {
+        dialogContainer.addDialogView(view);
+        dialogContainer.setRemoveDialogListener(new RemoveDialogListener() {
+
+            @Override
+            public void removeDialog() {
+                windowManager.removeView(dialogContainer);
+            }
+        });
+    }
+
+    private void addContainerToWindowManager() {
         WindowManager.LayoutParams windowParams = new WindowManager.LayoutParams();
         windowParams.x = 0;
         windowParams.y = 0;
         windowParams.width = WindowManager.LayoutParams.MATCH_PARENT;
         windowParams.height = WindowManager.LayoutParams.MATCH_PARENT;
+        windowParams.flags = WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
 //        windowParams.dimAmount = 0.0F;
         windowParams.format = PixelFormat.TRANSLUCENT;
         windowManager.addView(dialogContainer, windowParams);
     }
+
 
     public void show(){
         dialogContainer.show();
