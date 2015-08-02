@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -15,7 +14,6 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver;
-import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -25,16 +23,12 @@ import android.widget.Toast;
  */
 public class EmbedDialogFrameLayout extends FrameLayout {
 
-    private static final long FALL_DURATION = 800;
     private static final float DIM_RATIO = 0.8F;
     private float currentDim;
     private View dialogView;
-    private View dimView;
-    private int dialogTop;
-    private int dialogHeight;
     private float downY;
-    private int swipTopBoundary;
-    private int swipBottomBoundary;
+    private int translationYTopBoundary;
+    private int translationYBottomBoundary;
     private boolean animating;
     private SwipeDialogManager.RemoveDialogListener removeDialogListener;
     private int minFlingVelocity;
@@ -43,7 +37,7 @@ public class EmbedDialogFrameLayout extends FrameLayout {
     private VelocityTracker velocityTracker;
     private int maxFlingVelocity;
     private int customFlingVelocityThrehold;
-    private int dimChangeRefDyMax;
+    private int translationYMax;
 
     public EmbedDialogFrameLayout(Context context) {
         super(context);
@@ -98,11 +92,9 @@ public class EmbedDialogFrameLayout extends FrameLayout {
         getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
-                dialogTop = dialogView.getTop();
-                dialogHeight = dialogView.getHeight();
-                swipTopBoundary = -(dialogView.getTop() + dialogView.getBottom()) / 2;
-                swipBottomBoundary = -swipTopBoundary;
-                dimChangeRefDyMax = dialogView.getBottom();
+                translationYTopBoundary = -(dialogView.getTop() + dialogView.getBottom()) / 2;
+                translationYBottomBoundary = -translationYTopBoundary;
+                translationYMax = dialogView.getBottom();
                 fallIn();
                 getViewTreeObserver().removeOnPreDrawListener(this);
                 return true;
@@ -112,7 +104,7 @@ public class EmbedDialogFrameLayout extends FrameLayout {
     }
 
     private void fallIn() {
-        dialogView.setTranslationY(-dialogTop - dialogHeight);
+        dialogView.setTranslationY(-dialogView.getBottom());
         dialogView.setVisibility(VISIBLE);
         animate(0, DIM_RATIO, false);
     }
@@ -165,7 +157,7 @@ public class EmbedDialogFrameLayout extends FrameLayout {
         float dy = ev.getY() - downY;
 
         dialogView.setTranslationY(dy);
-        float newDim = DIM_RATIO * (1 - Math.min(1, Math.abs(dy / dimChangeRefDyMax)));
+        float newDim = DIM_RATIO * (1 - Math.min(1, Math.abs(dy / translationYMax)));
         setDim(newDim);
 
         if (intercept) {
@@ -193,9 +185,9 @@ public class EmbedDialogFrameLayout extends FrameLayout {
         velocityTracker.computeCurrentVelocity(1000);
         float velocityY = velocityTracker.getYVelocity();
         if (Math.abs(velocityY) < customFlingVelocityThrehold) {
-            if (dialogView.getTranslationY() < swipTopBoundary) {//[-infinite, -dialogTop)
+            if (dialogView.getTranslationY() < translationYTopBoundary) {//[-infinite, -dialogTop)
                 riseOut();
-            } else if (dialogView.getTranslationY() < swipBottomBoundary) {//[-dialog, bottom)
+            } else if (dialogView.getTranslationY() < translationYBottomBoundary) {//[-dialog, bottom)
                 recover();
             } else {
                 fallOut();
@@ -217,11 +209,11 @@ public class EmbedDialogFrameLayout extends FrameLayout {
     }
 
     private void riseOut() {
-        animate(-dialogTop - dialogHeight, 0, true);
+        animate(-dialogView.getBottom(), 0, true);
     }
 
     private void fallOut() {
-        animate(getHeight() - dialogTop, 0, true);
+        animate(getHeight() - dialogView.getTop(), 0, true);
     }
 
     private void animate(float endTranslationY, float endDim, final boolean dismiss) {
@@ -230,22 +222,12 @@ public class EmbedDialogFrameLayout extends FrameLayout {
         final float startDim = currentDim;
         final float dimDelta = endDim - startDim;
         ValueAnimator animator = ValueAnimator.ofFloat(dialogView.getTranslationY(), endTranslationY);
-//        animator.setDuration(FALL_DURATION);
         animator.setDuration(duration);
         animator.setInterpolator(new DecelerateInterpolator(1.6F));
-
-//        if (dismiss){
-//            animator.setInterpolator(new AccelerateInterpolator(1.6F));
-//        } else {
-//            animator.setInterpolator(new DecelerateInterpolator(1.6F));
-//        }
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
-//                dialogView.setAlpha(valueAnimator.getAnimatedFraction() * 2);
                 dialogView.setTranslationY((Float) valueAnimator.getAnimatedValue());
-//                dimView.setAlpha(valueAnimator.getAnimatedFraction() * DIM_RATIO);
-//                setBackgroundColor(Color.argb((int) (255 * valueAnimator.getAnimatedFraction() * DIM_RATIO), 0, 0, 0));
                 setDim(startDim + dimDelta * valueAnimator.getAnimatedFraction());
             }
         });
@@ -298,18 +280,6 @@ public class EmbedDialogFrameLayout extends FrameLayout {
     public void setRemoveDialogListener(SwipeDialogManager.RemoveDialogListener removeDialogListener) {
         this.removeDialogListener = removeDialogListener;
     }
-
-//    @Override
-//    public boolean onKeyDown(int keyCode, KeyEvent event) {
-//        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-//            if (!animating){
-//                riseOut();
-//            }
-//            return true;
-//        } else {
-//            return super.onKeyDown(keyCode, event);
-//        }
-//    }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {

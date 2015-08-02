@@ -46,7 +46,6 @@ public class SwipeDialogManager{
 
     public void addDialogView(View view) {
         addViewToContainer(view);
-
         addContainerToWindowManager();
     }
 
@@ -68,7 +67,6 @@ public class SwipeDialogManager{
         windowParams.width = WindowManager.LayoutParams.MATCH_PARENT;
         windowParams.height = WindowManager.LayoutParams.MATCH_PARENT;
         windowParams.flags = WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-//        windowParams.dimAmount = 0.0F;
         windowParams.format = PixelFormat.TRANSLUCENT;
         windowManager.addView(dialogContainer, windowParams);
     }
