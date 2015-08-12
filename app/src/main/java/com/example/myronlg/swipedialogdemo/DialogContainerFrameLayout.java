@@ -2,12 +2,10 @@ package com.example.myronlg.swipedialogdemo;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
-import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -22,24 +20,23 @@ import android.widget.FrameLayout;
 public class DialogContainerFrameLayout extends FrameLayout {
 
     private static final float DIM_RATIO = 0.8F;
-//    private static final float DIM_RATIO = 0.0F;
     private float currentDim;
+
     private View dialogView;
+
     private float downY;
     private int translationYTopBoundary;
     private int translationYBottomBoundary;
-    private boolean animating;
-    private SwipeDialogManager.RemoveDialogListener removeDialogListener;
-    private SwipeDialogNew.SwipeListener swipeListener;
-
-
-    private int minFlingVelocity;
-    private int touchSlop;
-    private boolean intercept;
-    private VelocityTracker velocityTracker;
-    private int maxFlingVelocity;
-    private int customFlingVelocityThrehold;
     private int translationYMax;
+
+    private boolean animating;
+    private boolean intercept;
+
+    private int touchSlop;
+    private int flingVelocityThreshold;
+    private VelocityTracker velocityTracker;
+
+    private SwipeDialogNew.SwipeListener swipeListener;
 
     public DialogContainerFrameLayout(Context context) {
         super(context);
@@ -60,33 +57,15 @@ public class DialogContainerFrameLayout extends FrameLayout {
         setLayerType(LAYER_TYPE_HARDWARE, null);
 
         ViewConfiguration viewConfiguration = ViewConfiguration.get(getContext());
-        minFlingVelocity = viewConfiguration.getScaledMinimumFlingVelocity();
-        maxFlingVelocity = viewConfiguration.getScaledMaximumFlingVelocity();
-        customFlingVelocityThrehold = (minFlingVelocity + maxFlingVelocity) / 5;
+        int minFlingVelocity = viewConfiguration.getScaledMinimumFlingVelocity();
+        int maxFlingVelocity = viewConfiguration.getScaledMaximumFlingVelocity();
+        flingVelocityThreshold = (minFlingVelocity + maxFlingVelocity) / 5;
         touchSlop = viewConfiguration.getScaledTouchSlop();
-    }
-
-    public void addDialogView(int layout) {
-        View dialogView = LayoutInflater.from(getContext()).inflate(layout, this, false);
-//        dialogView.findViewById(R.id.girl).setOnClickListener(new OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Toast.makeText(getContext(), "beautiful girl", Toast.LENGTH_LONG).show();
-//            }
-//        });
-//        dialogView.findViewById(R.id.button).setOnClickListener(new OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Toast.makeText(getContext(), "button clicked", Toast.LENGTH_LONG).show();
-//            }
-//        });
-        addDialogView(dialogView);
     }
 
     public void addDialogView(View dialogView) {
         this.dialogView = dialogView;
         dialogView.setVisibility(INVISIBLE);
-//        dialogView.setAlpha(0);
         FrameLayout.LayoutParams params = (LayoutParams) dialogView.getLayoutParams();
         if (params == null) {
             params = generateDefaultLayoutParams();
@@ -95,28 +74,6 @@ public class DialogContainerFrameLayout extends FrameLayout {
         params.height = LayoutParams.WRAP_CONTENT;
         params.gravity = Gravity.CENTER;
         addView(dialogView, params);
-
-    }
-
-    public void show() {
-        getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                translationYTopBoundary = -(dialogView.getTop() + dialogView.getBottom()) / 2;
-                translationYBottomBoundary = -translationYTopBoundary;
-                translationYMax = dialogView.getBottom();
-                fallIn();
-                getViewTreeObserver().removeOnPreDrawListener(this);
-                return true;
-            }
-        });
-        invalidate();
-    }
-
-    private void fallIn() {
-        dialogView.setTranslationY(-dialogView.getBottom());
-        dialogView.setVisibility(VISIBLE);
-        animate(0, DIM_RATIO, false, SwipeDialogNew.SwipeType.DISMISS);
     }
 
     @Override
@@ -183,18 +140,11 @@ public class DialogContainerFrameLayout extends FrameLayout {
 
     }
 
-    private void dispatchCancelEvent(MotionEvent ev) {
-        MotionEvent cancelEvent = MotionEvent.obtain(ev);
-        cancelEvent.setAction(MotionEvent.ACTION_CANCEL);
-        super.dispatchTouchEvent(cancelEvent);
-        cancelEvent.recycle();
-    }
-
     private boolean onEnd(MotionEvent ev) {
         velocityTracker.addMovement(ev);
         velocityTracker.computeCurrentVelocity(1000);
         float velocityY = velocityTracker.getYVelocity();
-        if (Math.abs(velocityY) < customFlingVelocityThrehold) {
+        if (Math.abs(velocityY) < flingVelocityThreshold) {
             if (dialogView.getTranslationY() < translationYTopBoundary) {//[-infinite, -dialogTop)
                 riseOut(SwipeDialogNew.SwipeType.DISMISS);
             } else if (dialogView.getTranslationY() < translationYBottomBoundary) {//[-dialog, bottom)
@@ -212,6 +162,19 @@ public class DialogContainerFrameLayout extends FrameLayout {
             }
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    private void dispatchCancelEvent(MotionEvent ev) {
+        MotionEvent cancelEvent = MotionEvent.obtain(ev);
+        cancelEvent.setAction(MotionEvent.ACTION_CANCEL);
+        super.dispatchTouchEvent(cancelEvent);
+        cancelEvent.recycle();
+    }
+
+    private void fallIn() {
+        dialogView.setTranslationY(-dialogView.getBottom());
+        dialogView.setVisibility(VISIBLE);
+        animate(0, DIM_RATIO, false, SwipeDialogNew.SwipeType.DISMISS);
     }
 
     private void recover() {
@@ -252,16 +215,8 @@ public class DialogContainerFrameLayout extends FrameLayout {
                 animating = false;
                 downY = -1;
                 intercept = false;
-                if (dismiss) {
-                    if (removeDialogListener != null) {
-                        removeDialogListener.removeDialog();
-                    }
-                    if (onDismissListener != null) {
-                        onDismissListener.onDismiss(null);
-                    }
-                    if (swipeListener != null) {
-                        swipeListener.onSwipe(swipeType);
-                    }
+                if (dismiss && swipeListener != null && swipeType != null) {
+                    swipeListener.onSwipe(swipeType);
                 }
             }
 
@@ -284,34 +239,20 @@ public class DialogContainerFrameLayout extends FrameLayout {
         currentDim = dim;
     }
 
-    private Dialog.OnDismissListener onDismissListener;
-
-    public void setOnDismissListener(Dialog.OnDismissListener onDismissListener) {
-        this.onDismissListener = onDismissListener;
+    public void show() {
+        getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                translationYTopBoundary = -(DialogContainerFrameLayout.this.dialogView.getTop() + DialogContainerFrameLayout.this.dialogView.getBottom()) / 2;
+                translationYBottomBoundary = -translationYTopBoundary;
+                translationYMax = DialogContainerFrameLayout.this.dialogView.getBottom();
+                fallIn();
+                getViewTreeObserver().removeOnPreDrawListener(this);
+                return true;
+            }
+        });
+        invalidate();
     }
-
-    public void setRemoveDialogListener(SwipeDialogManager.RemoveDialogListener removeDialogListener) {
-        this.removeDialogListener = removeDialogListener;
-    }
-/*
-
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        switch (event.getKeyCode()) {
-            case KeyEvent.KEYCODE_BACK:
-                if (!animating) {
-                    riseOut();
-                }
-                break;
-            case KeyEvent.KEYCODE_MENU:
-                break;
-            default:
-                break;
-        }
-        return super.dispatchKeyEvent(event);
-    }
-
-*/
 
     public void dismiss() {
         riseOut(SwipeDialogNew.SwipeType.DISMISS);

@@ -38,30 +38,12 @@ public class SwipeDialogNew extends Dialog {
 
     private void init() {
         final Window window = getWindow();
-//        WindowManager.LayoutParams windowParams = new WindowManager.LayoutParams();
-//        windowParams.x = 0;
-//        windowParams.y = 0;
-//        windowParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-//        windowParams.height = WindowManager.LayoutParams.MATCH_PARENT;
-//        windowParams.flags = windowParams.flags & WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED & ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-//        windowParams.format = PixelFormat.TRANSLUCENT;
-//        windowParams.horizontalMargin = 0;
-//        windowParams.verticalMargin = 0;
-//        windowParams.horizontalWeight = 1.0F;
-//        windowParams.verticalWeight = 1.0F;
-
-//        window.setAttributes(windowParams);
-
         window.requestFeature(Window.FEATURE_NO_TITLE);
         window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-
         window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-//        window.getDecorView().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-
 
         container = new DialogContainerFrameLayout(getContext());
-//        container.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         container.setSwipeListener(new SwipeListener() {
             @Override
             public void onSwipe(SwipeType swipeType) {
@@ -80,12 +62,6 @@ public class SwipeDialogNew extends Dialog {
         layoutParams = new ViewGroup.LayoutParams(getWidth(), getHeight());
     }
 
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     public void setContentView(int layoutResID) {

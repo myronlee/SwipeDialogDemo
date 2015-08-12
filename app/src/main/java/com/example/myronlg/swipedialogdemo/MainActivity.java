@@ -26,24 +26,24 @@ public class MainActivity extends ActionBarActivity {
 //                swipeDialogManager.addDialogView(R.layout.dialog);
 //                swipeDialogManager.show();
                 BeautyDialog dialog = new BeautyDialog(MainActivity.this);
-                dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-                    @Override
-                    public void onShow(DialogInterface dialog) {
-                        Toast.makeText(MainActivity.this, "dialog show", Toast.LENGTH_LONG).show();
-                    }
-                });
-                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        Toast.makeText(MainActivity.this, "dialog dismiss", Toast.LENGTH_LONG).show();
-                    }
-                });
-                dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialog) {
-                        Toast.makeText(MainActivity.this, "dialog cancel", Toast.LENGTH_LONG).show();
-                    }
-                });
+//                dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+//                    @Override
+//                    public void onShow(DialogInterface dialog) {
+//                        Toast.makeText(MainActivity.this, "dialog show", Toast.LENGTH_LONG).show();
+//                    }
+//                });
+//                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+//                    @Override
+//                    public void onDismiss(DialogInterface dialog) {
+//                        Toast.makeText(MainActivity.this, "dialog dismiss", Toast.LENGTH_LONG).show();
+//                    }
+//                });
+//                dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+//                    @Override
+//                    public void onCancel(DialogInterface dialog) {
+//                        Toast.makeText(MainActivity.this, "dialog cancel", Toast.LENGTH_LONG).show();
+//                    }
+//                });
 //                dialog.setCancelable(false);
 
                 dialog.show();

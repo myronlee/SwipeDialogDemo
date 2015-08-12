@@ -15,7 +15,7 @@ public class SwipeDialogManager{
 
     public SwipeDialogManager(Context context) {
         this.context = context;
-        this.windowManager = (WindowManager) context.getSystemService("window");
+//        this.windowManager = (WindowManager) context.getSystemService("window");
         dialogViewContainer = new DialogContainerFrameLayout(context);
     }
 
@@ -25,14 +25,14 @@ public class SwipeDialogManager{
      */
     public void addDialogView(int layout) {
         dialogViewContainer = new DialogContainerFrameLayout(context);
-        dialogViewContainer.addDialogView(layout);
-        dialogViewContainer.setRemoveDialogListener(new RemoveDialogListener() {
-
-            @Override
-            public void removeDialog() {
-                windowManager.removeView(dialogViewContainer);
-            }
-        });
+//        dialogViewContainer.addDialogView(layout);
+//        dialogViewContainer.setRemoveDialogListener(new RemoveDialogListener() {
+//
+//            @Override
+//            public void removeDialog() {
+//                windowManager.removeView(dialogViewContainer);
+//            }
+//        });
 
         addContainerToWindowManager();
     }
@@ -44,13 +44,13 @@ public class SwipeDialogManager{
 
     private void addViewToContainer(View view) {
         dialogViewContainer.addDialogView(view);
-        dialogViewContainer.setRemoveDialogListener(new RemoveDialogListener() {
-
-            @Override
-            public void removeDialog() {
-                windowManager.removeView(dialogViewContainer);
-            }
-        });
+//        dialogViewContainer.setRemoveDialogListener(new RemoveDialogListener() {
+//
+//            @Override
+//            public void removeDialog() {
+//                windowManager.removeView(dialogViewContainer);
+//            }
+//        });
     }
 
     private void addContainerToWindowManager() {
