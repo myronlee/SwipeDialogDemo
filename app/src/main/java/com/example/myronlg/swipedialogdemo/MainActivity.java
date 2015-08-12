@@ -1,15 +1,17 @@
 package com.example.myronlg.swipedialogdemo;
 
+import android.content.DialogInterface;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 
 public class MainActivity extends ActionBarActivity {
 
-    private EmbedDialogFrameLayout dialogContaner;
+    private DialogContainerFrameLayout dialogContaner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,9 +22,31 @@ public class MainActivity extends ActionBarActivity {
         findViewById(R.id.open_dialog).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SwipeDialogManager swipeDialogManager = new SwipeDialogManager(MainActivity.this);
-                swipeDialogManager.addDialogView(R.layout.dialog);
-                swipeDialogManager.show();
+//                SwipeDialogManager swipeDialogManager = new SwipeDialogManager(MainActivity.this);
+//                swipeDialogManager.addDialogView(R.layout.dialog);
+//                swipeDialogManager.show();
+                BeautyDialog dialog = new BeautyDialog(MainActivity.this);
+                dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface dialog) {
+                        Toast.makeText(MainActivity.this, "dialog show", Toast.LENGTH_LONG).show();
+                    }
+                });
+                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        Toast.makeText(MainActivity.this, "dialog dismiss", Toast.LENGTH_LONG).show();
+                    }
+                });
+                dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        Toast.makeText(MainActivity.this, "dialog cancel", Toast.LENGTH_LONG).show();
+                    }
+                });
+//                dialog.setCancelable(false);
+
+                dialog.show();
             }
         });
     }
