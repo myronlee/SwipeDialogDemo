@@ -4,12 +4,12 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 
 /**
  * Created by myron.lg on 2015/8/12.
@@ -18,7 +18,7 @@ public class SwipeDialogNew extends Dialog {
 
     enum SwipeType {DISMISS, CANCEL}
 
-    private DialogContainerFrameLayout container;
+    private DialogContainer container;
     private ViewGroup.LayoutParams layoutParams;
 
     public SwipeDialogNew(Context context) {
@@ -40,14 +40,16 @@ public class SwipeDialogNew extends Dialog {
         final Window window = getWindow();
         window.requestFeature(Window.FEATURE_NO_TITLE);
         window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+//        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        window.getDecorView().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        window.getAttributes().windowAnimations = 0;
+//        WindowManager.LayoutParams params = window.getAttributes();
 
-        container = new DialogContainerFrameLayout(getContext());
+        container = new DialogContainer(getContext());
         container.setSwipeListener(new SwipeListener() {
             @Override
             public void onSwipe(SwipeType swipeType) {
-                switch (swipeType){
+                switch (swipeType) {
                     case DISMISS:
                         SwipeDialogNew.super.dismiss();
                         break;
@@ -76,6 +78,15 @@ public class SwipeDialogNew extends Dialog {
 
     @Override
     public void setContentView(View view, ViewGroup.LayoutParams params) {
+//        if (view instanceof FrameLayout){
+//            FrameLayout frameLayout = (FrameLayout) view;
+//            for (int i = 0; i < frameLayout.getChildCount(); i++){
+//                View child = frameLayout.getChildAt(i);
+//                frameLayout.removeView(child);
+//                container.addView(child, i);
+//            }
+//        }
+        container.removeAllViews();
         container.addDialogView(view);
         super.setContentView(container, layoutParams);
     }

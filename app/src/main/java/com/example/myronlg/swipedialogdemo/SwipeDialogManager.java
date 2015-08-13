@@ -11,12 +11,12 @@ import android.view.WindowManager;
 public class SwipeDialogManager{
     private Context context;
     private WindowManager windowManager;
-    private DialogContainerFrameLayout dialogViewContainer;
+    private DialogContainer dialogViewContainer;
 
     public SwipeDialogManager(Context context) {
         this.context = context;
 //        this.windowManager = (WindowManager) context.getSystemService("window");
-        dialogViewContainer = new DialogContainerFrameLayout(context);
+        dialogViewContainer = new DialogContainer(context);
     }
 
     /**
@@ -24,7 +24,7 @@ public class SwipeDialogManager{
      * @param layout
      */
     public void addDialogView(int layout) {
-        dialogViewContainer = new DialogContainerFrameLayout(context);
+        dialogViewContainer = new DialogContainer(context);
 //        dialogViewContainer.addDialogView(layout);
 //        dialogViewContainer.setRemoveDialogListener(new RemoveDialogListener() {
 //

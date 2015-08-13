@@ -17,7 +17,7 @@ import android.widget.FrameLayout;
 /**
  * Created by myron.lg on 2015/7/30.
  */
-public class DialogContainerFrameLayout extends FrameLayout {
+public class DialogContainer extends FrameLayout {
 
     private static final float DIM_RATIO = 0.8F;
     private float currentDim;
@@ -38,23 +38,23 @@ public class DialogContainerFrameLayout extends FrameLayout {
 
     private SwipeDialogNew.SwipeListener swipeListener;
 
-    public DialogContainerFrameLayout(Context context) {
+    public DialogContainer(Context context) {
         super(context);
         init();
     }
 
-    public DialogContainerFrameLayout(Context context, AttributeSet attrs) {
+    public DialogContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public DialogContainerFrameLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+    public DialogContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
 
     private void init() {
-        setLayerType(LAYER_TYPE_HARDWARE, null);
+//        setLayerType(LAYER_TYPE_HARDWARE, null);
 
         ViewConfiguration viewConfiguration = ViewConfiguration.get(getContext());
         int minFlingVelocity = viewConfiguration.getScaledMinimumFlingVelocity();
@@ -123,14 +123,19 @@ public class DialogContainerFrameLayout extends FrameLayout {
 
         float dy = ev.getY() - downY;
 
-        dialogView.setTranslationY(dy);
-        float newDim = DIM_RATIO * (1 - Math.min(1, Math.abs(dy / translationYMax)));
-        setDim(newDim);
+//        dialogView.setTranslationY(dy);
+//        float newDim = DIM_RATIO * (1 - Math.min(1, Math.abs(dy / translationYMax)));
+//        setDim(newDim);
 
         if (intercept) {
+            dialogView.setTranslationY(dy);
+//            dialogView.setTranslationY(dy > 0 ? dy - touchSlop : dy + touchSlop);
             return true;
         }
-        if (Math.abs(dy) > touchSlop) {
+
+        if (Math.abs(dy) >= touchSlop) {
+//            dialogView.setTranslationY(dy > 0 ? dy - touchSlop : dy + touchSlop);
+            downY = ev.getY();
             dispatchCancelEvent(ev);
             intercept = true;
             return true;
@@ -150,14 +155,14 @@ public class DialogContainerFrameLayout extends FrameLayout {
             } else if (dialogView.getTranslationY() < translationYBottomBoundary) {//[-dialog, bottom)
                 recover();
             } else {
-                fallOut();
+                fallOut(SwipeDialogNew.SwipeType.DISMISS);
             }
         } else {
             if (intercept) {
                 if (velocityY < 0) {
                     riseOut(SwipeDialogNew.SwipeType.DISMISS);
                 } else {
-                    fallOut();
+                    fallOut(SwipeDialogNew.SwipeType.DISMISS);
                 }
             }
         }
@@ -185,15 +190,15 @@ public class DialogContainerFrameLayout extends FrameLayout {
         animate(-dialogView.getBottom(), 0, true, swipeType);
     }
 
-    private void fallOut() {
+    private void fallOut(SwipeDialogNew.SwipeType dismiss) {
         animate(getHeight() - dialogView.getTop(), 0, true, SwipeDialogNew.SwipeType.DISMISS);
     }
 
     private void animate(float endTranslationY, float endDim, final boolean dismiss, final SwipeDialogNew.SwipeType swipeType) {
         float translationYDelta = endTranslationY - dialogView.getTranslationY();
         long duration = Math.min(Math.max((long) (Math.abs(translationYDelta) * 0.7F), 400), 600);
-        final float startDim = currentDim;
-        final float dimDelta = endDim - startDim;
+//        final float startDim = currentDim;
+//        final float dimDelta = endDim - startDim;
         ValueAnimator animator = ValueAnimator.ofFloat(dialogView.getTranslationY(), endTranslationY);
         animator.setDuration(duration);
         animator.setInterpolator(new DecelerateInterpolator(1.6F));
@@ -201,7 +206,7 @@ public class DialogContainerFrameLayout extends FrameLayout {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 dialogView.setTranslationY((Float) valueAnimator.getAnimatedValue());
-                setDim(startDim + dimDelta * valueAnimator.getAnimatedFraction());
+//                setDim(startDim + dimDelta * valueAnimator.getAnimatedFraction());
             }
         });
         animator.addListener(new Animator.AnimatorListener() {
@@ -234,18 +239,21 @@ public class DialogContainerFrameLayout extends FrameLayout {
 
     }
 
-    private void setDim(float dim) {
-        setBackgroundColor(Color.argb((int) (255 * dim), 0, 0, 0));
-        currentDim = dim;
-    }
+    /*
 
+        private void setDim(float dim) {
+            setBackgroundColor(Color.argb((int) (255 * dim), 0, 0, 0));
+            currentDim = dim;
+        }
+
+    */
     public void show() {
         getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
-                translationYTopBoundary = -(DialogContainerFrameLayout.this.dialogView.getTop() + DialogContainerFrameLayout.this.dialogView.getBottom()) / 2;
+                translationYTopBoundary = -(DialogContainer.this.dialogView.getTop() + DialogContainer.this.dialogView.getBottom()) / 2;
                 translationYBottomBoundary = -translationYTopBoundary;
-                translationYMax = DialogContainerFrameLayout.this.dialogView.getBottom();
+                translationYMax = DialogContainer.this.dialogView.getBottom();
                 fallIn();
                 getViewTreeObserver().removeOnPreDrawListener(this);
                 return true;

@@ -1,17 +1,15 @@
 package com.example.myronlg.swipedialogdemo;
 
-import android.content.DialogInterface;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 
 public class MainActivity extends ActionBarActivity {
 
-    private DialogContainerFrameLayout dialogContaner;
+    private DialogContainer dialogContaner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

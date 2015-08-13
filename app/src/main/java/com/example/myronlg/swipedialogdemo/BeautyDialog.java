@@ -3,6 +3,7 @@ package com.example.myronlg.swipedialogdemo;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 /**
@@ -38,5 +39,16 @@ public class BeautyDialog extends SwipeDialogNew {
                 Toast.makeText(getContext(), "button clicked", Toast.LENGTH_LONG).show();
             }
         });
+//        View contentParent = findViewById(android.R.id.content);
+//        if (contentParent == null) {
+//            Toast.makeText(getContext(), "contentParent == null", Toast.LENGTH_LONG).show();
+//        } else if (contentParent instanceof FrameLayout){
+//            Toast.makeText(getContext(), "contentParent instanceof FrameLayout", Toast.LENGTH_LONG).show();
+//        } else {
+//            Toast.makeText(getContext(), contentParent.getClass().toString(), Toast.LENGTH_LONG).show();
+//        }
+//
+//        Toast.makeText(getContext(), getWindow().getDecorView().getClass().toString(), Toast.LENGTH_LONG).show();
+
     }
 }
