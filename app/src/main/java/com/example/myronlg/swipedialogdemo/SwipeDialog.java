@@ -89,6 +89,12 @@ public class SwipeDialog extends Dialog {
     }
 
     @Override
+    public void setCanceledOnTouchOutside(boolean cancel) {
+        super.setCanceledOnTouchOutside(cancel);
+        container.setCanceledOnTouchOutside(cancel);
+    }
+
+    @Override
     public void show() {
         super.show();
         container.show();

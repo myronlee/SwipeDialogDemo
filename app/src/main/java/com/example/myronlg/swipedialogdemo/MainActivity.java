@@ -41,6 +41,7 @@ public class MainActivity extends ActionBarActivity {
                     }
                 });
 //                dialog.setCancelable(false);
+                dialog.setCanceledOnTouchOutside(true);
 
                 dialog.show();
             }

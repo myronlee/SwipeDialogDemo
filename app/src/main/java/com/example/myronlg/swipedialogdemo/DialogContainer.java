@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -23,6 +24,9 @@ public class DialogContainer extends FrameLayout {
     private static final float MAX_DIM = 0.5F;
     private float currDim;
     private boolean changeDimEnabled = true;
+
+    private boolean canceledOnTouchOutside;
+    private boolean touchOutside;
 
     private View dialogView;
 
@@ -63,6 +67,8 @@ public class DialogContainer extends FrameLayout {
         touchSlop = viewConfiguration.getScaledTouchSlop();
 
         setVisibility(INVISIBLE);
+
+
     }
 
     public void addDialogView(View dialogView) {
@@ -132,6 +138,10 @@ public class DialogContainer extends FrameLayout {
     private boolean onDown(MotionEvent ev) {
         velocityTracker.clear();
         velocityTracker.addMovement(ev);
+
+        Rect dialogHitRect = new Rect();
+        dialogView.getHitRect(dialogHitRect);
+        touchOutside = !dialogHitRect.contains(((int) ev.getX()), ((int) ev.getY()));
 
         downY = ev.getY();
         super.dispatchTouchEvent(ev);
@@ -296,5 +306,19 @@ public class DialogContainer extends FrameLayout {
 
     public void setChangeDimEnabled(boolean changeDimEnabled) {
         this.changeDimEnabled = changeDimEnabled;
+    }
+
+    public void setCanceledOnTouchOutside(boolean cancel) {
+        canceledOnTouchOutside = cancel;
+        if (canceledOnTouchOutside){
+            setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (touchOutside){
+                        riseOut();
+                    }
+                }
+            });
+        }
     }
 }
