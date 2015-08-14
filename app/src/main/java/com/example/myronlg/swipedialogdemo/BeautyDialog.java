@@ -3,13 +3,12 @@ package com.example.myronlg.swipedialogdemo;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 /**
  * Created by myron.lg on 2015/8/12.
  */
-public class BeautyDialog extends SwipeDialogNew {
+public class BeautyDialog extends SwipeDialog {
     public BeautyDialog(Context context) {
         super(context);
     }

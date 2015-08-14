@@ -18,9 +18,11 @@ import android.widget.FrameLayout;
  * Created by myron.lg on 2015/7/30.
  */
 public class DialogContainer extends FrameLayout {
+    private enum AnimateType {FALL_IN, RECOVER, RISE_OUT, FALL_OUT}
 
-    private static final float DIM_RATIO = 0.8F;
-    private float currentDim;
+    private static final float MAX_DIM = 0.5F;
+    private float currDim;
+    private boolean changeDimEnabled = true;
 
     private View dialogView;
 
@@ -36,7 +38,7 @@ public class DialogContainer extends FrameLayout {
     private int flingVelocityThreshold;
     private VelocityTracker velocityTracker;
 
-    private SwipeDialogNew.SwipeListener swipeListener;
+    private SwipeListener swipeListener;
 
     public DialogContainer(Context context) {
         super(context);
@@ -54,18 +56,17 @@ public class DialogContainer extends FrameLayout {
     }
 
     private void init() {
-//        setLayerType(LAYER_TYPE_HARDWARE, null);
-
         ViewConfiguration viewConfiguration = ViewConfiguration.get(getContext());
         int minFlingVelocity = viewConfiguration.getScaledMinimumFlingVelocity();
         int maxFlingVelocity = viewConfiguration.getScaledMaximumFlingVelocity();
         flingVelocityThreshold = (minFlingVelocity + maxFlingVelocity) / 5;
         touchSlop = viewConfiguration.getScaledTouchSlop();
+
+        setVisibility(INVISIBLE);
     }
 
     public void addDialogView(View dialogView) {
         this.dialogView = dialogView;
-        dialogView.setVisibility(INVISIBLE);
         FrameLayout.LayoutParams params = (LayoutParams) dialogView.getLayoutParams();
         if (params == null) {
             params = generateDefaultLayoutParams();
@@ -74,6 +75,29 @@ public class DialogContainer extends FrameLayout {
         params.height = LayoutParams.WRAP_CONTENT;
         params.gravity = Gravity.CENTER;
         addView(dialogView, params);
+    }
+
+
+    public void show() {
+        getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                translationYTopBoundary = -(DialogContainer.this.dialogView.getTop() + DialogContainer.this.dialogView.getBottom()) / 2;
+                translationYBottomBoundary = -translationYTopBoundary;
+                translationYMax = DialogContainer.this.dialogView.getBottom();
+
+                dialogView.setTranslationY(-dialogView.getBottom());
+                if (!changeDimEnabled) {
+                    setDim(MAX_DIM);
+                }
+                setVisibility(VISIBLE);
+
+                fallIn();
+                getViewTreeObserver().removeOnPreDrawListener(this);
+                return true;
+            }
+        });
+        invalidate();
     }
 
     @Override
@@ -121,23 +145,21 @@ public class DialogContainer extends FrameLayout {
             downY = ev.getY();
         }
 
-        float dy = ev.getY() - downY;
-
-//        dialogView.setTranslationY(dy);
-//        float newDim = DIM_RATIO * (1 - Math.min(1, Math.abs(dy / translationYMax)));
-//        setDim(newDim);
+        final float dy = ev.getY() - downY;
 
         if (intercept) {
             dialogView.setTranslationY(dy);
-//            dialogView.setTranslationY(dy > 0 ? dy - touchSlop : dy + touchSlop);
+            if (changeDimEnabled) {
+                float newDim = MAX_DIM * (1 - Math.min(1, Math.abs(dy / translationYMax)));
+                setDim(newDim);
+            }
             return true;
         }
 
         if (Math.abs(dy) >= touchSlop) {
-//            dialogView.setTranslationY(dy > 0 ? dy - touchSlop : dy + touchSlop);
-            downY = ev.getY();
-            dispatchCancelEvent(ev);
             intercept = true;
+            downY = ev.getY();
+            dispatchCancelEventToChild(ev);
             return true;
         }
 
@@ -151,54 +173,52 @@ public class DialogContainer extends FrameLayout {
         float velocityY = velocityTracker.getYVelocity();
         if (Math.abs(velocityY) < flingVelocityThreshold) {
             if (dialogView.getTranslationY() < translationYTopBoundary) {//[-infinite, -dialogTop)
-                riseOut(SwipeDialogNew.SwipeType.DISMISS);
+                riseOut();
             } else if (dialogView.getTranslationY() < translationYBottomBoundary) {//[-dialog, bottom)
                 recover();
             } else {
-                fallOut(SwipeDialogNew.SwipeType.DISMISS);
+                fallOut();
             }
         } else {
             if (intercept) {
                 if (velocityY < 0) {
-                    riseOut(SwipeDialogNew.SwipeType.DISMISS);
+                    riseOut();
                 } else {
-                    fallOut(SwipeDialogNew.SwipeType.DISMISS);
+                    fallOut();
                 }
             }
         }
         return super.dispatchTouchEvent(ev);
     }
 
-    private void dispatchCancelEvent(MotionEvent ev) {
+    private void dispatchCancelEventToChild(MotionEvent ev) {
         MotionEvent cancelEvent = MotionEvent.obtain(ev);
         cancelEvent.setAction(MotionEvent.ACTION_CANCEL);
         super.dispatchTouchEvent(cancelEvent);
         cancelEvent.recycle();
     }
 
-    private void fallIn() {
-        dialogView.setTranslationY(-dialogView.getBottom());
-        dialogView.setVisibility(VISIBLE);
-        animate(0, DIM_RATIO, false, SwipeDialogNew.SwipeType.DISMISS);
+    public void fallIn() {
+        animate(0, MAX_DIM, AnimateType.FALL_IN);
     }
 
     private void recover() {
-        animate(0, DIM_RATIO, false, null);
+        animate(0, MAX_DIM, AnimateType.RECOVER);
     }
 
-    private void riseOut(SwipeDialogNew.SwipeType swipeType) {
-        animate(-dialogView.getBottom(), 0, true, swipeType);
+    public void riseOut() {
+        animate(-dialogView.getBottom(), 0, AnimateType.RISE_OUT);
     }
 
-    private void fallOut(SwipeDialogNew.SwipeType dismiss) {
-        animate(getHeight() - dialogView.getTop(), 0, true, SwipeDialogNew.SwipeType.DISMISS);
+    private void fallOut() {
+        animate(getHeight() - dialogView.getTop(), 0, AnimateType.FALL_OUT);
     }
 
-    private void animate(float endTranslationY, float endDim, final boolean dismiss, final SwipeDialogNew.SwipeType swipeType) {
+    private void animate(float endTranslationY, float endDim, final AnimateType animateType) {
         float translationYDelta = endTranslationY - dialogView.getTranslationY();
         long duration = Math.min(Math.max((long) (Math.abs(translationYDelta) * 0.7F), 400), 600);
-//        final float startDim = currentDim;
-//        final float dimDelta = endDim - startDim;
+        final float startDim = currDim;
+        final float dimDelta = endDim - startDim;
         ValueAnimator animator = ValueAnimator.ofFloat(dialogView.getTranslationY(), endTranslationY);
         animator.setDuration(duration);
         animator.setInterpolator(new DecelerateInterpolator(1.6F));
@@ -206,7 +226,9 @@ public class DialogContainer extends FrameLayout {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 dialogView.setTranslationY((Float) valueAnimator.getAnimatedValue());
-//                setDim(startDim + dimDelta * valueAnimator.getAnimatedFraction());
+                if (changeDimEnabled) {
+                    setDim(startDim + dimDelta * valueAnimator.getAnimatedFraction());
+                }
             }
         });
         animator.addListener(new Animator.AnimatorListener() {
@@ -220,8 +242,21 @@ public class DialogContainer extends FrameLayout {
                 animating = false;
                 downY = -1;
                 intercept = false;
-                if (dismiss && swipeListener != null && swipeType != null) {
-                    swipeListener.onSwipe(swipeType);
+                if (swipeListener != null) {
+                    switch (animateType){
+                        case FALL_IN:
+                            swipeListener.onFallIn();
+                            break;
+                        case RECOVER:
+                            swipeListener.onRecover();
+                            break;
+                        case RISE_OUT:
+                            swipeListener.onRiseOut();
+                            break;
+                        case FALL_OUT:
+                            swipeListener.onFallOut();
+                            break;
+                    }
                 }
             }
 
@@ -239,39 +274,27 @@ public class DialogContainer extends FrameLayout {
 
     }
 
-    /*
-
-        private void setDim(float dim) {
-            setBackgroundColor(Color.argb((int) (255 * dim), 0, 0, 0));
-            currentDim = dim;
-        }
-
-    */
-    public void show() {
-        getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                translationYTopBoundary = -(DialogContainer.this.dialogView.getTop() + DialogContainer.this.dialogView.getBottom()) / 2;
-                translationYBottomBoundary = -translationYTopBoundary;
-                translationYMax = DialogContainer.this.dialogView.getBottom();
-                fallIn();
-                getViewTreeObserver().removeOnPreDrawListener(this);
-                return true;
-            }
-        });
-        invalidate();
+    private void setDim(float dim) {
+        setBackgroundColor(Color.argb((int) (255 * dim), 0, 0, 0));
+        currDim = dim;
     }
 
-    public void dismiss() {
-        riseOut(SwipeDialogNew.SwipeType.DISMISS);
-    }
 
-    public void cancel() {
-        riseOut(SwipeDialogNew.SwipeType.CANCEL);
-    }
-
-    public void setSwipeListener(SwipeDialogNew.SwipeListener swipeListener) {
+    public void setSwipeListener(SwipeListener swipeListener) {
         this.swipeListener = swipeListener;
     }
 
+    public interface SwipeListener {
+        void onFallIn();
+
+        void onRiseOut();
+
+        void onFallOut();
+
+        void onRecover();
+    }
+
+    public void setChangeDimEnabled(boolean changeDimEnabled) {
+        this.changeDimEnabled = changeDimEnabled;
+    }
 }

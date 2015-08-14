@@ -9,29 +9,26 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 
 /**
  * Created by myron.lg on 2015/8/12.
  */
-public class SwipeDialogNew extends Dialog {
-
-    enum SwipeType {DISMISS, CANCEL}
+public class SwipeDialog extends Dialog {
 
     private DialogContainer container;
-    private ViewGroup.LayoutParams layoutParams;
+    private boolean cancel;
 
-    public SwipeDialogNew(Context context) {
+    public SwipeDialog(Context context) {
         super(context);
         init();
     }
 
-    public SwipeDialogNew(Context context, int theme) {
+    public SwipeDialog(Context context, int theme) {
         super(context, theme);
         init();
     }
 
-    protected SwipeDialogNew(Context context, boolean cancelable, OnCancelListener cancelListener) {
+    protected SwipeDialog(Context context, boolean cancelable, OnCancelListener cancelListener) {
         super(context, cancelable, cancelListener);
         init();
     }
@@ -40,28 +37,35 @@ public class SwipeDialogNew extends Dialog {
         final Window window = getWindow();
         window.requestFeature(Window.FEATURE_NO_TITLE);
         window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-//        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        window.getDecorView().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         window.getAttributes().windowAnimations = 0;
-//        WindowManager.LayoutParams params = window.getAttributes();
 
         container = new DialogContainer(getContext());
-        container.setSwipeListener(new SwipeListener() {
+        container.setSwipeListener(new DialogContainer.SwipeListener() {
             @Override
-            public void onSwipe(SwipeType swipeType) {
-                switch (swipeType) {
-                    case DISMISS:
-                        SwipeDialogNew.super.dismiss();
-                        break;
-                    case CANCEL:
-                        SwipeDialogNew.super.cancel();
-                        break;
-                }
+            public void onFallIn() {
+            }
 
+            @Override
+            public void onRiseOut() {
+                if (cancel) {
+                    SwipeDialog.super.cancel();
+                    cancel = false;
+                } else {
+                    SwipeDialog.super.dismiss();
+                }
+            }
+
+            @Override
+            public void onFallOut() {
+                SwipeDialog.super.dismiss();
+            }
+
+            @Override
+            public void onRecover() {
             }
         });
-
-        layoutParams = new ViewGroup.LayoutParams(getWidth(), getHeight());
     }
 
 
@@ -78,16 +82,9 @@ public class SwipeDialogNew extends Dialog {
 
     @Override
     public void setContentView(View view, ViewGroup.LayoutParams params) {
-//        if (view instanceof FrameLayout){
-//            FrameLayout frameLayout = (FrameLayout) view;
-//            for (int i = 0; i < frameLayout.getChildCount(); i++){
-//                View child = frameLayout.getChildAt(i);
-//                frameLayout.removeView(child);
-//                container.addView(child, i);
-//            }
-//        }
         container.removeAllViews();
         container.addDialogView(view);
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(getWidth(), getHeight());
         super.setContentView(container, layoutParams);
     }
 
@@ -99,12 +96,17 @@ public class SwipeDialogNew extends Dialog {
 
     @Override
     public void dismiss() {
-        container.dismiss();
+        container.riseOut();
     }
 
     @Override
     public void cancel() {
-        container.cancel();
+        cancel = true;
+        container.riseOut();
+    }
+
+    public void setChangeDimEnabled(boolean changeDimEnabled) {
+        container.setChangeDimEnabled(changeDimEnabled);
     }
 
     public int getWidth() {
@@ -122,9 +124,5 @@ public class SwipeDialogNew extends Dialog {
             result = getContext().getResources().getDimensionPixelSize(resourceId);
         }
         return result;
-    }
-
-    public interface SwipeListener {
-        void onSwipe(SwipeType swipeType);
     }
 }
