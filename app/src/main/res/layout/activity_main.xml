@@ -1,15 +1,36 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/dialog_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
     <Button
         android:id="@+id/open_dialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="open dialog"
+        android:text="open normal dialog"
         />
 
-</FrameLayout>
+    <Button
+        android:id="@+id/open_list_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="open dialog with listview"
+        />
+
+    <Button
+        android:id="@+id/open_scroll_view_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="open dialog with scrollview"
+        />
+
+    <Button
+        android:id="@+id/open_long_text_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="open dialog with long textview"
+        />
+</LinearLayout>

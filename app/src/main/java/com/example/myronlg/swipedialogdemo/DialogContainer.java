@@ -6,19 +6,28 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.AdapterView;
 import android.widget.FrameLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
 /**
  * Created by myron.lg on 2015/7/30.
  */
 public class DialogContainer extends FrameLayout {
+
+    private boolean handleByChild;
+
+
     private enum AnimateType {FALL_IN, RECOVER, RISE_OUT, FALL_OUT}
 
     private static final float MAX_DIM = 0.5F;
@@ -31,12 +40,13 @@ public class DialogContainer extends FrameLayout {
     private View dialogView;
 
     private float downY;
+    private float lastY;
     private int translationYTopBoundary;
     private int translationYBottomBoundary;
     private int translationYMax;
 
     private boolean animating;
-    private boolean intercept;
+    private boolean handleBySelf;
 
     private int touchSlop;
     private int flingVelocityThreshold;
@@ -68,7 +78,6 @@ public class DialogContainer extends FrameLayout {
 
         setVisibility(INVISIBLE);
 
-
     }
 
     public void addDialogView(View dialogView) {
@@ -77,8 +86,12 @@ public class DialogContainer extends FrameLayout {
         if (params == null) {
             params = generateDefaultLayoutParams();
         }
-        params.width = LayoutParams.WRAP_CONTENT;
-        params.height = LayoutParams.WRAP_CONTENT;
+        if (params.width == LayoutParams.MATCH_PARENT) {
+            params.width = LayoutParams.WRAP_CONTENT;
+        }
+        if (params.height == LayoutParams.MATCH_PARENT) {
+            params.height = LayoutParams.WRAP_CONTENT;
+        }
         params.gravity = Gravity.CENTER;
         addView(dialogView, params);
     }
@@ -144,6 +157,7 @@ public class DialogContainer extends FrameLayout {
         touchOutside = !dialogHitRect.contains(((int) ev.getX()), ((int) ev.getY()));
 
         downY = ev.getY();
+        lastY = ev.getY();
         super.dispatchTouchEvent(ev);
         return true;
     }
@@ -155,9 +169,121 @@ public class DialogContainer extends FrameLayout {
             downY = ev.getY();
         }
 
+        if (lastY == -1) {
+            lastY = ev.getY();
+        }
+
         final float dy = ev.getY() - downY;
 
-        if (intercept) {
+        if (handleBySelf) {
+            dialogView.setTranslationY(dy);
+            if (changeDimEnabled) {
+                float newDim = MAX_DIM * (1 - Math.min(1, Math.abs(dy / translationYMax)));
+                setDim(newDim);
+            }
+            return true;
+        }
+
+        if (handleByChild) {
+            super.dispatchTouchEvent(ev);
+            return true;
+        }
+
+        if (Math.abs(dy) >= touchSlop) {
+            if (touchOutside || !dialogContentCanScroll(ev.getY() - lastY)) {
+                handleBySelf = true;
+                handleByChild = false;
+                downY = ev.getY();
+                dispatchCancelEventToChild(ev);
+                return true;
+            } else {
+                handleByChild = true;
+                handleBySelf = false;
+                super.dispatchTouchEvent(ev);
+                return true;
+            }
+        }
+
+        lastY = ev.getY();
+        super.dispatchTouchEvent(ev);
+        return true;
+/*
+
+        if (Math.abs(dy) >= touchSlop && !(!touchOutside && dialogContentCanScroll(ev.getY() - lastY))) {
+            handleBySelf = true;
+            downY = ev.getY();
+            lastY = ev.getY();
+            dispatchCancelEventToChild(ev);
+            return true;
+        }
+
+*/
+/*
+
+        if (touchOutside) {
+            if (handleBySelf) {
+                dialogView.setTranslationY(dy);
+                if (changeDimEnabled) {
+                    float newDim = MAX_DIM * (1 - Math.min(1, Math.abs(dy / translationYMax)));
+                    setDim(newDim);
+                }
+                return true;
+            }
+
+            if (Math.abs(dy) >= touchSlop) {
+                handleBySelf = true;
+                downY = ev.getY();
+                lastY = ev.getY();
+                dispatchCancelEventToChild(ev);
+                return true;
+            }
+
+            return true;
+        } else {
+            if (dialogContentCanScroll(ev.getY() - lastY)){
+                if (handleBySelf) {
+                    dispatchDownEventToChild(ev);
+                    handleBySelf = false;
+                }
+                super.dispatchTouchEvent(ev);
+                return true;
+            }
+
+            if (handleBySelf) {
+                dialogView.setTranslationY(dy);
+                if (changeDimEnabled) {
+                    float newDim = MAX_DIM * (1 - Math.min(1, Math.abs(dy / translationYMax)));
+                    setDim(newDim);
+                }
+                return true;
+            }
+
+            if (Math.abs(dy) >= touchSlop) {
+                handleBySelf = true;
+                downY = ev.getY();
+                lastY = ev.getY();
+                dispatchCancelEventToChild(ev);
+                return true;
+            }
+
+            super.dispatchTouchEvent(ev);
+            return true;
+        }
+
+*/
+
+/*
+
+        if (!touchOutside && dialogContentCanScroll(ev.getY() - lastY)) {
+            if (handleBySelf) {
+                dispatchDownEventToChild(ev);
+                handleBySelf = false;
+            }
+            super.dispatchTouchEvent(ev);
+            return true;
+        }
+
+        if (handleBySelf) {
             dialogView.setTranslationY(dy);
             if (changeDimEnabled) {
                 float newDim = MAX_DIM * (1 - Math.min(1, Math.abs(dy / translationYMax)));
@@ -167,30 +293,34 @@ public class DialogContainer extends FrameLayout {
         }
 
         if (Math.abs(dy) >= touchSlop) {
-            intercept = true;
+            handleBySelf = true;
             downY = ev.getY();
+            lastY = ev.getY();
             dispatchCancelEventToChild(ev);
             return true;
         }
 
-        return super.dispatchTouchEvent(ev);
+        super.dispatchTouchEvent(ev);
+        return true;
 
+*/
     }
 
     private boolean onEnd(MotionEvent ev) {
         velocityTracker.addMovement(ev);
         velocityTracker.computeCurrentVelocity(1000);
         float velocityY = velocityTracker.getYVelocity();
-        if (Math.abs(velocityY) < flingVelocityThreshold) {
-            if (dialogView.getTranslationY() < translationYTopBoundary) {//[-infinite, -dialogTop)
-                riseOut();
-            } else if (dialogView.getTranslationY() < translationYBottomBoundary) {//[-dialog, bottom)
-                recover();
+        if (handleBySelf) {
+            if (Math.abs(velocityY) < flingVelocityThreshold) {
+                if (dialogView.getTranslationY() < translationYTopBoundary) {//[-infinite, -dialogTop)
+                    riseOut();
+                } else if (dialogView.getTranslationY() < translationYBottomBoundary) {//[-dialog, bottom)
+                    recover();
+                } else {
+                    fallOut();
+                }
             } else {
-                fallOut();
-            }
-        } else {
-            if (intercept) {
+
                 if (velocityY < 0) {
                     riseOut();
                 } else {
@@ -198,7 +328,62 @@ public class DialogContainer extends FrameLayout {
                 }
             }
         }
+        reset();
         return super.dispatchTouchEvent(ev);
+    }
+
+
+    private void reset() {
+        downY = -1;
+        lastY = -1;
+        handleBySelf = false;
+        handleByChild = false;
+    }
+
+    /**
+     * 对话框的内容如果是可以滑动的，那么这个可滑动的容器必须是顶层容器，否则会有bug。
+     *
+     * @param dy
+     * @return
+     */
+    private boolean dialogContentCanScroll(float dy) {
+        if (dialogView instanceof AdapterView<?>) {
+            AdapterView<?> adapterView = (AdapterView<?>) dialogView;
+            if (adapterView.getCount() == 0
+                    || (adapterView.getLastVisiblePosition() == adapterView.getCount() - 1
+                    && adapterView.getChildAt(adapterView.getChildCount() - 1).getBottom() <= adapterView.getHeight()
+                    && dy < 0)
+                    || (adapterView.getFirstVisiblePosition() == 0
+                    && adapterView.getChildAt(0).getTop() >= 0)
+                    && dy > 0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        if ((dialogView instanceof ScrollView)
+                && ((ScrollView) dialogView).getChildCount() > 0
+                && ((ScrollView) dialogView).getChildAt(0).getMeasuredHeight() > dialogView.getHeight()
+                && !((dialogView.getScrollY() <= 0 && dy > 0) || (dialogView.getScrollY() >= ((ScrollView) dialogView).getChildAt(0).getMeasuredHeight() - dialogView.getHeight() && dy < 0))) {
+            return true;
+        }
+
+        if (dialogView instanceof TextView
+                && ((TextView) dialogView).getMovementMethod() != null
+                && ((TextView) dialogView).getLayout().getHeight() > dialogView.getHeight()
+                && !((dialogView.getScrollY() <= 0 && dy > 0) || (dialogView.getScrollY() >= ((TextView) dialogView).getLayout().getHeight() - dialogView.getHeight() && dy < 0))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void dispatchDownEventToChild(MotionEvent ev) {
+        MotionEvent cancelEvent = MotionEvent.obtain(ev);
+        cancelEvent.setAction(MotionEvent.ACTION_DOWN);
+        super.dispatchTouchEvent(cancelEvent);
+        cancelEvent.recycle();
     }
 
     private void dispatchCancelEventToChild(MotionEvent ev) {
@@ -250,10 +435,8 @@ public class DialogContainer extends FrameLayout {
             @Override
             public void onAnimationEnd(Animator animator) {
                 animating = false;
-                downY = -1;
-                intercept = false;
                 if (swipeListener != null) {
-                    switch (animateType){
+                    switch (animateType) {
                         case FALL_IN:
                             swipeListener.onFallIn();
                             break;
@@ -289,6 +472,9 @@ public class DialogContainer extends FrameLayout {
         currDim = dim;
     }
 
+    public void setDialogView(View dialogView) {
+        this.dialogView = dialogView;
+    }
 
     public void setSwipeListener(SwipeListener swipeListener) {
         this.swipeListener = swipeListener;
@@ -310,11 +496,11 @@ public class DialogContainer extends FrameLayout {
 
     public void setCanceledOnTouchOutside(boolean cancel) {
         canceledOnTouchOutside = cancel;
-        if (canceledOnTouchOutside){
+        if (canceledOnTouchOutside) {
             setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (touchOutside){
+                    if (touchOutside) {
                         riseOut();
                     }
                 }

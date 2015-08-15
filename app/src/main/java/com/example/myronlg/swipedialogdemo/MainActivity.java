@@ -1,5 +1,6 @@
 package com.example.myronlg.swipedialogdemo;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -25,7 +26,7 @@ public class MainActivity extends ActionBarActivity {
                 dialog.setOnShowListener(new DialogInterface.OnShowListener() {
                     @Override
                     public void onShow(DialogInterface dialog) {
-                        Toast.makeText(MainActivity.this, "dialog show", Toast.LENGTH_LONG).show();
+//                        Toast.makeText(MainActivity.this, "dialog show", Toast.LENGTH_LONG).show();
                     }
                 });
                 dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
@@ -42,7 +43,30 @@ public class MainActivity extends ActionBarActivity {
                 });
 //                dialog.setCancelable(false);
                 dialog.setCanceledOnTouchOutside(true);
+                dialog.show();
+            }
+        });
+        findViewById(R.id.open_list_dialog).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
+                Dialog dialog = new ListDialog(MainActivity.this);
+                dialog.show();
+            }
+        });
+        findViewById(R.id.open_scroll_view_dialog).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Dialog dialog = new ScrollViewDialog(MainActivity.this);
+                dialog.show();
+            }
+        });
+        findViewById(R.id.open_long_text_dialog).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Dialog dialog = new LongTextDialog(MainActivity.this);
                 dialog.show();
             }
         });
@@ -64,6 +88,8 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            ListDialog dialog = new ListDialog(MainActivity.this);
+            dialog.show();
             return true;
         }
 

@@ -71,7 +71,10 @@ public class SwipeDialog extends Dialog {
 
     @Override
     public void setContentView(int layoutResID) {
-        View dialogView = LayoutInflater.from(getContext()).inflate(layoutResID, null);
+        View dialogView = LayoutInflater.from(getContext()).inflate(layoutResID, container, false);
+//        container.setDialogView(dialogView);
+//        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(getWidth(), getHeight());
+//        super.setContentView(container, layoutParams);
         setContentView(dialogView, null);
     }
 
