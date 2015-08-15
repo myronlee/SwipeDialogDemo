@@ -65,6 +65,11 @@ public class SwipeDialog extends Dialog {
             @Override
             public void onRecover() {
             }
+
+            @Override
+            public void onTouchOutside() {
+                cancel = true;
+            }
         });
     }
 
@@ -90,7 +95,23 @@ public class SwipeDialog extends Dialog {
         ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(getWidth(), getHeight());
         super.setContentView(container, layoutParams);
     }
-
+//
+//    /**
+//     * Sets whether this dialog is canceled when touched outside the window's
+//     * bounds. If setting to true, the dialog is set to be cancelable if not
+//     * already set.
+//     *
+//     * @param cancel Whether the dialog should be canceled when touched outside
+//     *            the window.
+//     */
+//    public void setCanceledOnTouchOutside(boolean cancel) {
+//        if (cancel && !mCancelable) {
+//            mCancelable = true;
+//        }
+//
+//        mWindow.setCloseOnTouchOutside(cancel);
+//    }
+//
     @Override
     public void setCanceledOnTouchOutside(boolean cancel) {
         super.setCanceledOnTouchOutside(cancel);

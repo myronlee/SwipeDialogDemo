@@ -6,11 +6,36 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancelable"
+        android:id="@+id/cancelable" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CanceledOnTouchOutside"
+        android:id="@+id/canceledOnTouchOutside" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="EnableListeners"
+        android:id="@+id/listener" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New CheckBox"
+        android:id="@+id/checkBox3"
+        android:visibility="invisible"/>
+
     <Button
         android:id="@+id/open_dialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="open normal dialog"
+        android:text="open dialog"
         />
 
     <Button

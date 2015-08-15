@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.Toast;
 
 
@@ -17,11 +18,65 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        final CheckBox cancelable = (CheckBox) findViewById(R.id.cancelable);
+        final CheckBox canceledOnTouchOutside = (CheckBox) findViewById(R.id.canceledOnTouchOutside);
+        final CheckBox setListener = (CheckBox) findViewById(R.id.listener);
+
+        final View.OnClickListener listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Dialog dialog = null;
+                switch (view.getId()) {
+                    case R.id.open_dialog:
+                        dialog = new BeautyDialog(MainActivity.this);
+                        break;
+                    case R.id.open_list_dialog:
+                        dialog = new ListDialog(MainActivity.this);
+                        break;
+                    case R.id.open_scroll_view_dialog:
+                        dialog = new ScrollViewDialog(MainActivity.this);
+                        break;
+                    case R.id.open_long_text_dialog:
+                        dialog = new LongTextDialog(MainActivity.this);
+                        break;
+                }
+                if (dialog != null) {
+                    dialog.setCancelable(cancelable.isChecked());
+                    dialog.setCanceledOnTouchOutside(canceledOnTouchOutside.isChecked());
+                    if (setListener.isChecked()) {
+                        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                            @Override
+                            public void onShow(DialogInterface dialog) {
+                                Toast.makeText(MainActivity.this, "dialog show", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                Toast.makeText(MainActivity.this, "dialog dismiss", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                Toast.makeText(MainActivity.this, "dialog cancel", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                    dialog.show();
+                }
+            }
+        };
+        findViewById(R.id.open_dialog).setOnClickListener(listener);
+        findViewById(R.id.open_list_dialog).setOnClickListener(listener);
+        findViewById(R.id.open_scroll_view_dialog).setOnClickListener(listener);
+        findViewById(R.id.open_long_text_dialog).setOnClickListener(listener);
+ /*
         findViewById(R.id.open_dialog).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                BeautyDialog dialog = new BeautyDialog(MainActivity.this);
+                Dialog dialog = new BeautyDialog(MainActivity.this);
 //                dialog.setChangeDimEnabled(true);
                 dialog.setOnShowListener(new DialogInterface.OnShowListener() {
                     @Override
@@ -70,7 +125,8 @@ public class MainActivity extends ActionBarActivity {
                 dialog.show();
             }
         });
-    }
+
+*/    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

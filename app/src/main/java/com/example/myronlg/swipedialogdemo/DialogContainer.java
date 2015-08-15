@@ -488,6 +488,8 @@ public class DialogContainer extends FrameLayout {
         void onFallOut();
 
         void onRecover();
+
+        void onTouchOutside();
     }
 
     public void setChangeDimEnabled(boolean changeDimEnabled) {
@@ -501,10 +503,15 @@ public class DialogContainer extends FrameLayout {
                 @Override
                 public void onClick(View v) {
                     if (touchOutside) {
+                        if (swipeListener != null){
+                            swipeListener.onTouchOutside();
+                        }
                         riseOut();
                     }
                 }
             });
         }
     }
+
+
 }
