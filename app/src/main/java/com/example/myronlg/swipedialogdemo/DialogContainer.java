@@ -6,7 +6,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -26,6 +25,7 @@ import android.widget.TextView;
 public class DialogContainer extends FrameLayout {
 
     private boolean handleByChild;
+    private View targetView;
 
 
     private enum AnimateType {FALL_IN, RECOVER, RISE_OUT, FALL_OUT}
@@ -156,6 +156,8 @@ public class DialogContainer extends FrameLayout {
         dialogView.getHitRect(dialogHitRect);
         touchOutside = !dialogHitRect.contains(((int) ev.getX()), ((int) ev.getY()));
 
+        targetView = getTargetView(this, MotionEvent.obtain(ev));
+
         downY = ev.getY();
         lastY = ev.getY();
         super.dispatchTouchEvent(ev);
@@ -190,7 +192,7 @@ public class DialogContainer extends FrameLayout {
         }
 
         if (Math.abs(dy) >= touchSlop) {
-            if (touchOutside || !dialogContentCanScroll(ev.getY() - lastY)) {
+            if (touchOutside || !targetViewCanScroll(ev.getY() - lastY)) {
                 handleBySelf = true;
                 handleByChild = false;
                 downY = ev.getY();
@@ -207,103 +209,6 @@ public class DialogContainer extends FrameLayout {
         lastY = ev.getY();
         super.dispatchTouchEvent(ev);
         return true;
-/*
-
-        if (Math.abs(dy) >= touchSlop && !(!touchOutside && dialogContentCanScroll(ev.getY() - lastY))) {
-            handleBySelf = true;
-            downY = ev.getY();
-            lastY = ev.getY();
-            dispatchCancelEventToChild(ev);
-            return true;
-        }
-
-*/
-/*
-
-        if (touchOutside) {
-            if (handleBySelf) {
-                dialogView.setTranslationY(dy);
-                if (changeDimEnabled) {
-                    float newDim = MAX_DIM * (1 - Math.min(1, Math.abs(dy / translationYMax)));
-                    setDim(newDim);
-                }
-                return true;
-            }
-
-            if (Math.abs(dy) >= touchSlop) {
-                handleBySelf = true;
-                downY = ev.getY();
-                lastY = ev.getY();
-                dispatchCancelEventToChild(ev);
-                return true;
-            }
-
-            return true;
-        } else {
-            if (dialogContentCanScroll(ev.getY() - lastY)){
-                if (handleBySelf) {
-                    dispatchDownEventToChild(ev);
-                    handleBySelf = false;
-                }
-                super.dispatchTouchEvent(ev);
-                return true;
-            }
-
-            if (handleBySelf) {
-                dialogView.setTranslationY(dy);
-                if (changeDimEnabled) {
-                    float newDim = MAX_DIM * (1 - Math.min(1, Math.abs(dy / translationYMax)));
-                    setDim(newDim);
-                }
-                return true;
-            }
-
-            if (Math.abs(dy) >= touchSlop) {
-                handleBySelf = true;
-                downY = ev.getY();
-                lastY = ev.getY();
-                dispatchCancelEventToChild(ev);
-                return true;
-            }
-
-            super.dispatchTouchEvent(ev);
-            return true;
-        }
-
-*/
-
-/*
-
-        if (!touchOutside && dialogContentCanScroll(ev.getY() - lastY)) {
-            if (handleBySelf) {
-                dispatchDownEventToChild(ev);
-                handleBySelf = false;
-            }
-            super.dispatchTouchEvent(ev);
-            return true;
-        }
-
-        if (handleBySelf) {
-            dialogView.setTranslationY(dy);
-            if (changeDimEnabled) {
-                float newDim = MAX_DIM * (1 - Math.min(1, Math.abs(dy / translationYMax)));
-                setDim(newDim);
-            }
-            return true;
-        }
-
-        if (Math.abs(dy) >= touchSlop) {
-            handleBySelf = true;
-            downY = ev.getY();
-            lastY = ev.getY();
-            dispatchCancelEventToChild(ev);
-            return true;
-        }
-
-        super.dispatchTouchEvent(ev);
-        return true;
-
-*/
     }
 
     private boolean onEnd(MotionEvent ev) {
@@ -340,15 +245,10 @@ public class DialogContainer extends FrameLayout {
         handleByChild = false;
     }
 
-    /**
-     * 对话框的内容如果是可以滑动的，那么这个可滑动的容器必须是顶层容器，否则会有bug。
-     *
-     * @param dy
-     * @return
-     */
-    private boolean dialogContentCanScroll(float dy) {
-        if (dialogView instanceof AdapterView<?>) {
-            AdapterView<?> adapterView = (AdapterView<?>) dialogView;
+
+    private boolean targetViewCanScroll(float dy) {
+        if (targetView instanceof AdapterView<?>) {
+            AdapterView<?> adapterView = (AdapterView<?>) targetView;
             if (adapterView.getCount() == 0
                     || (adapterView.getLastVisiblePosition() == adapterView.getCount() - 1
                     && adapterView.getChildAt(adapterView.getChildCount() - 1).getBottom() <= adapterView.getHeight()
@@ -362,21 +262,46 @@ public class DialogContainer extends FrameLayout {
             }
         }
 
-        if ((dialogView instanceof ScrollView)
-                && ((ScrollView) dialogView).getChildCount() > 0
-                && ((ScrollView) dialogView).getChildAt(0).getMeasuredHeight() > dialogView.getHeight()
-                && !((dialogView.getScrollY() <= 0 && dy > 0) || (dialogView.getScrollY() >= ((ScrollView) dialogView).getChildAt(0).getMeasuredHeight() - dialogView.getHeight() && dy < 0))) {
+        if ((targetView instanceof ScrollView)
+                && ((ScrollView) targetView).getChildCount() > 0
+                && ((ScrollView) targetView).getChildAt(0).getMeasuredHeight() > targetView.getHeight()
+                && !((targetView.getScrollY() <= 0 && dy > 0) || (targetView.getScrollY() >= ((ScrollView) targetView).getChildAt(0).getMeasuredHeight() - targetView.getHeight() && dy < 0))) {
             return true;
         }
 
-        if (dialogView instanceof TextView
-                && ((TextView) dialogView).getMovementMethod() != null
-                && ((TextView) dialogView).getLayout().getHeight() > dialogView.getHeight()
-                && !((dialogView.getScrollY() <= 0 && dy > 0) || (dialogView.getScrollY() >= ((TextView) dialogView).getLayout().getHeight() - dialogView.getHeight() && dy < 0))) {
+        if (targetView instanceof TextView
+                && ((TextView) targetView).getMovementMethod() != null
+                && ((TextView) targetView).getLayout().getHeight() > targetView.getHeight()
+                && !((targetView.getScrollY() <= 0 && dy > 0) || (targetView.getScrollY() >= ((TextView) targetView).getLayout().getHeight() - targetView.getHeight() && dy < 0))) {
             return true;
         }
 
         return false;
+    }
+
+    private View getTargetView(View view, MotionEvent event) {
+        if (view instanceof AdapterView<?> || view instanceof ScrollView) {
+            event.recycle();
+            return view;
+        } else if (view instanceof ViewGroup) {
+            event.offsetLocation(-view.getLeft(), -view.getTop());//do not swap them, tears
+            ViewGroup viewGroup = (ViewGroup) view;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                View child = viewGroup.getChildAt(i);
+                Rect childHitRect = new Rect();
+                child.getHitRect(childHitRect);
+                if (childHitRect.contains(((int) event.getX()), ((int) event.getY()))) {
+//                    event.offsetLocation(-child.getTop(), -child.getLeft());
+//                    event.transform(child.getInverseMatrix());
+                    return getTargetView(child, event);
+                }
+            }
+            event.recycle();
+            return view;
+        } else {
+            event.recycle();
+            return view;
+        }
     }
 
     private void dispatchDownEventToChild(MotionEvent ev) {
@@ -503,7 +428,7 @@ public class DialogContainer extends FrameLayout {
                 @Override
                 public void onClick(View v) {
                     if (touchOutside) {
-                        if (swipeListener != null){
+                        if (swipeListener != null) {
                             swipeListener.onTouchOutside();
                         }
                         riseOut();
