@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import com.sinaapp.myron.library.SwipeDialog;
+
 /**
  * Created by myron.lg on 2015/8/12.
  */

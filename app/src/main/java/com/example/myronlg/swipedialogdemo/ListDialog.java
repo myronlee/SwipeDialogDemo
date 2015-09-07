@@ -9,6 +9,8 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.sinaapp.myron.library.SwipeDialog;
+
 /**
  * Created by myron.lg on 2015/8/15.
  */
@@ -30,7 +32,7 @@ public class ListDialog extends SwipeDialog {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.dialog_listview);
-        ListView listView = (ListView) findViewById(R.id.list);
+        ListView listView = (ListView)findViewById(R.id.list);
         BaseAdapter adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, new String[]{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n"});
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {

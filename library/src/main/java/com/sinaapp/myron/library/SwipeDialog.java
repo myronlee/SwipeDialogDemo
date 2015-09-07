@@ -1,4 +1,4 @@
-package com.example.myronlg.swipedialogdemo;
+package com.sinaapp.myron.library;
 
 import android.app.Dialog;
 import android.content.Context;

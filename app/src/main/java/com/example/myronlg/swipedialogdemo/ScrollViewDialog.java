@@ -2,12 +2,8 @@ package com.example.myronlg.swipedialogdemo;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
+
+import com.sinaapp.myron.library.SwipeDialog;
 
 /**
  * Created by myron.lg on 2015/8/15.
